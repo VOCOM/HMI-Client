@@ -1,11 +1,13 @@
 ﻿using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.Advertisement;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
-using Windows.Foundation;
 
 namespace Client.Model;
 
 public class BLEService {
+  public event Action? Disconnected;
+  public event Action<string, ulong>? DeviceDiscovered;
+
   public BLEService() {
     _watcher = new BluetoothLEAdvertisementWatcher { ScanningMode = BluetoothLEScanningMode.Active };
 
@@ -15,28 +17,26 @@ public class BLEService {
   public void StartScan() => _watcher.Start();
   public void StopScan() => _watcher.Stop();
 
-  public static List<GattDeviceService>? Connect(ulong address) {
-    IAsyncOperation<BluetoothLEDevice>? op = BluetoothLEDevice.FromBluetoothAddressAsync(address);
-    op.Wait();
-    BluetoothLEDevice? device = op.GetResults();
-    if(device is null) return null;
+  public async Task<List<GattDeviceService>> ConnectAsync(ulong address) {
+    BluetoothLEDevice device = await BluetoothLEDevice.FromBluetoothAddressAsync(address);
+    device.ConnectionStatusChanged += OnConnectionStatusChanged;
 
-    IAsyncOperation<GattDeviceServicesResult> res_op = device.GetGattServicesAsync();
-    res_op.Wait();
-    GattDeviceServicesResult result = res_op.GetResults();
-
-    return result.Status is not GattCommunicationStatus.Success ? null : [.. result.Services];
+    GattDeviceServicesResult services = await device.GetGattServicesAsync();
+    return services.Status is GattCommunicationStatus.Success ? [.. services.Services] : [];
   }
 
-  public event Action<string, ulong>? DeviceDiscovered;
+  private readonly BluetoothLEAdvertisementWatcher _watcher;
 
+  private void OnConnectionStatusChanged(BluetoothLEDevice device, object args) {
+    if(device.ConnectionStatus is BluetoothConnectionStatus.Disconnected) Disconnected?.Invoke();
+  }
   private void OnAdvertisementReceived(BluetoothLEAdvertisementWatcher s, BluetoothLEAdvertisementReceivedEventArgs e) {
     string name = e.Advertisement.LocalName;
     ulong address = e.BluetoothAddress;
+
     if(string.IsNullOrEmpty(name) is false) {
       DeviceDiscovered?.Invoke(name, address);
     }
   }
 
-  private readonly BluetoothLEAdvertisementWatcher _watcher;
 }

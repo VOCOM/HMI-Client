@@ -5,48 +5,87 @@
   xmlns:client="clr-namespace:Client"
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-  Title="HMI Client"
-  d:DataContext="{d:DesignInstance Type=client:ObservableString}"
-  WindowState="Maximized"
+  Style="{StaticResource MainWindow}"
+  WindowStyle="None"
   mc:Ignorable="d">
 
-  <Grid Margin="10">
-    <StackPanel>
-      <TextBlock
-        Margin="0,0,0,10"
-        FontSize="18"
-        Text="Discovered BLE Devices:" />
+  <StackPanel>
+    <Grid Name="TitleBar" Style="{StaticResource TitleBar}">
+      <Grid.Resources>
+        <Style BasedOn="{StaticResource TitleButton}" TargetType="Button" />
+      </Grid.Resources>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="auto" />
+        <ColumnDefinition Width="auto" />
+        <ColumnDefinition Width="auto" />
+      </Grid.ColumnDefinitions>
+
+      <Button
+        Grid.Column="1"
+        Click="OnMinimizePress"
+        Content="_" />
+      <Button
+        Grid.Column="2"
+        Click="OnMaximizePress"
+        Content="O" />
+      <Button
+        Grid.Column="3"
+        Click="OnClosePress"
+        Content="X"
+        Style="{StaticResource CloseButton}" />
+    </Grid>
+
+    <StackPanel Name="Devices" Style="{StaticResource Panel}">
+      <StackPanel Orientation="Horizontal">
+        <TextBlock Style="{StaticResource SubTitle}" Text="Discovered BLE Devices:" />
+        <Button
+          Name="Refresh"
+          Margin="10,0"
+          Padding="10,0"
+          Click="OnRefreshClick"
+          Content="Refresh" />
+      </StackPanel>
+
       <Grid>
         <Grid.ColumnDefinitions>
           <ColumnDefinition />
-          <ColumnDefinition />
+          <ColumnDefinition Width="auto" />
         </Grid.ColumnDefinitions>
 
         <ListBox
-          x:Name="DeviceList"
+          Name="DeviceNames"
           Grid.Column="0"
-          BorderThickness="0" />
+          Style="{StaticResource List}" />
         <ListBox
-          x:Name="AddressList"
+          Name="AddressList"
           Grid.Column="1"
-          BorderThickness="0" />
+          Style="{StaticResource List}" />
       </Grid>
+    </StackPanel>
+    <StackPanel Style="{StaticResource Panel}">
+
+      <TextBlock Style="{StaticResource SubTitle}" Text="Services:" />
       <Grid>
         <Grid.ColumnDefinitions>
           <ColumnDefinition />
-          <ColumnDefinition />
+          <ColumnDefinition Width="auto" />
         </Grid.ColumnDefinitions>
 
         <ListBox
           x:Name="ServiceNameList"
           Grid.Column="0"
-          BorderThickness="0" />
+          Style="{StaticResource List}" />
         <ListBox
           x:Name="ServiceList"
           Grid.Column="1"
-          BorderThickness="0" />
+          Style="{StaticResource List}" />
       </Grid>
-      <TextBlock x:Name="IMU_Data" />
     </StackPanel>
-  </Grid>
+    <StackPanel Style="{StaticResource Panel}">
+      <TextBlock Style="{StaticResource SubTitle}" Text="Packet Data:" />
+      <TextBlock Name="Timestamp" Style="{StaticResource Text}" />
+      <TextBlock Name="Orientation" Style="{StaticResource Text}" />
+    </StackPanel>
+  </StackPanel>
 </Window>
