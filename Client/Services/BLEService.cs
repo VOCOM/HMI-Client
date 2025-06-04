@@ -2,7 +2,7 @@
 using Windows.Devices.Bluetooth.Advertisement;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
 
-namespace Client.Model;
+namespace Client.Services;
 
 public class BLEService {
   public event Action? Disconnected;
@@ -25,12 +25,12 @@ public class BLEService {
     return services.Status is GattCommunicationStatus.Success ? [.. services.Services] : [];
   }
 
-  private readonly BluetoothLEAdvertisementWatcher _watcher;
+  readonly BluetoothLEAdvertisementWatcher _watcher;
 
-  private void OnConnectionStatusChanged(BluetoothLEDevice device, object args) {
+  void OnConnectionStatusChanged(BluetoothLEDevice device, object args) {
     if(device.ConnectionStatus is BluetoothConnectionStatus.Disconnected) Disconnected?.Invoke();
   }
-  private void OnAdvertisementReceived(BluetoothLEAdvertisementWatcher s, BluetoothLEAdvertisementReceivedEventArgs e) {
+  void OnAdvertisementReceived(BluetoothLEAdvertisementWatcher s, BluetoothLEAdvertisementReceivedEventArgs e) {
     string name = e.Advertisement.LocalName;
     ulong address = e.BluetoothAddress;
 

@@ -1,7 +1,11 @@
 ﻿using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Input;
-using Client.Model;
+using System.Windows.Threading;
+using Client.Services;
+using Client.Shaders;
+using OpenTK.Graphics.OpenGL4;
+using OpenTK.Mathematics;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
 using Windows.Storage.Streams;
 using Application = System.Windows.Application;
@@ -30,45 +34,54 @@ public partial class MainWindow: Window {
     TitleBar.MouseMove += OnMouseMove;
 
     DeviceNames.ItemsSource = DevicesList;
-    AddressList.ItemsSource = Addresses;
-
-    DeviceNames.MouseDoubleClick += ConnectToDevice;
+    DeviceNames.MouseDoubleClick += OnConnectClick;
 
     ServiceNameList.ItemsSource = ServiceNames;
-    ServiceList.ItemsSource = Services;
 
     _bleService.DeviceDiscovered += OnDeviceDiscovered;
     _bleService.Disconnected += OnDeviceDisconnected;
+
+    Viewport.Loaded += OnLoaded;
+    Viewport.Render += OnRender;
+    Viewport.Start();
   }
 
-  private uint _lastTime = 0;
-  private readonly BLEService _bleService = new();
+  uint _lastTime = 0;
+  readonly BLEService _bleService = new();
+  Shader? _shader;
+  Axis3D? _axis3D;
+  Quaternion orientation = Quaternion.Identity;
+  Matrix4 toENU = new(
+    new Vector4(1, 0, 0, 0),
+    new Vector4(0, 0, 1, 0),
+    new Vector4(0, 1, 0, 0),
+    new Vector4(0, 0, 0, 1));
 
   // Title bar
-  private double _top, _left;
-  private bool _mouseDown = false;
-  private Point _oldPos = new();
+  double _top, _left;
+  bool _mouseDown = false;
+  Point _oldPos = new();
 
-  private void OnMouseMove(object s, MouseEventArgs e) {
+  void OnMouseMove(object s, MouseEventArgs e) {
     if(_mouseDown is false) return;
     Point currentPos = System.Windows.Forms.Cursor.Position;
     Point deltaPos = currentPos - ((System.Drawing.Size)_oldPos);
     Left = _left + deltaPos.X;
     Top = _top + deltaPos.Y;
   }
-  private void OnMouseLeftButtonDown(object s, MouseButtonEventArgs e) {
+  void OnMouseLeftButtonDown(object s, MouseButtonEventArgs e) {
     _mouseDown = true;
     _oldPos = System.Windows.Forms.Cursor.Position;
     _top = Top;
     _left = Left;
   }
-  private void OnMouseRightButtonDown(object s, MouseButtonEventArgs e) => _mouseDown = false;
-  private void OnMinimizePress(object s, RoutedEventArgs e) => Dispatcher.Invoke(() => WindowState = WindowState.Minimized);
-  private void OnMaximizePress(object s, RoutedEventArgs e) => Dispatcher.Invoke(() => WindowState = WindowState is WindowState.Maximized ? WindowState.Normal : WindowState.Maximized);
-  private void OnClosePress(object s, RoutedEventArgs e) => Dispatcher.Invoke(Application.Current.Shutdown);
+  void OnMouseRightButtonDown(object s, MouseButtonEventArgs e) => _mouseDown = false;
+  void OnMinimizePress(object s, RoutedEventArgs e) => Dispatcher.Invoke(() => WindowState = WindowState.Minimized);
+  void OnMaximizePress(object s, RoutedEventArgs e) => Dispatcher.Invoke(() => WindowState = WindowState is WindowState.Maximized ? WindowState.Normal : WindowState.Maximized);
+  void OnClosePress(object s, RoutedEventArgs e) => Dispatcher.Invoke(Application.Current.Shutdown);
 
   // BLE Devices
-  private async void OnRefreshClick(object s, RoutedEventArgs e) {
+  async void OnRefreshClick(object s, RoutedEventArgs e) {
     Dispatcher.Invoke(() => {
       Devices.IsEnabled = false;
       DevicesList.Clear();
@@ -79,7 +92,7 @@ public partial class MainWindow: Window {
     _bleService.StopScan();
     Dispatcher.Invoke(() => Devices.IsEnabled = true);
   }
-  private async void ConnectToDevice(object s, MouseButtonEventArgs e) {
+  async void OnConnectClick(object s, MouseButtonEventArgs e) {
     if(s is not ListBox listbox) return;
 
     Dispatcher.Invoke(() => {
@@ -112,45 +125,72 @@ public partial class MainWindow: Window {
         ServiceNames.Add(name);
       });
     }
+
+    _lastTime = 0;
   }
 
   // BLE Updates
-  private void OnDeviceDiscovered(string name, ulong address) {
+  void OnDeviceDiscovered(string name, ulong address) {
     if(Addresses.Contains(address)) return;
     Dispatcher.Invoke(() => {
       DevicesList.Add(name);
       Addresses.Add(address);
     });
   }
-  private void OnDeviceDisconnected() {
+  void OnDeviceDisconnected() {
     Dispatcher.Invoke(() => {
       ServiceNames.Clear();
       Services.Clear();
     });
   }
-  private void OnDeviceNotify(GattCharacteristic s, GattValueChangedEventArgs args) {
+  void OnDeviceNotify(GattCharacteristic s, GattValueChangedEventArgs args) {
     var reader = DataReader.FromBuffer(args.CharacteristicValue);
     byte[] input = new byte[args.CharacteristicValue.Length];
     reader.ReadBytes(input);
 
+    // Timestamp
     uint time = ((uint)input[3] << 24) | ((uint)input[2] << 16) | ((uint)input[1] << 8) | input[0];
     if(time < _lastTime) return;
     string timestamp = time.ToString();
 
+    // EKF 0
     float w = (((uint)input[05] << 8) | input[04]) / 65535.0f;
     float x = ((((uint)input[07] << 8) | input[06]) / 32767.5f) - 1.0f;
     float y = ((((uint)input[09] << 8) | input[08]) / 32767.5f) - 1.0f;
     float z = ((((uint)input[11] << 8) | input[10]) / 32767.5f) - 1.0f;
+    orientation = new(x, y, z, w);
+    _lastTime = time;
+
     string data = "EKF 0 ["
           + w.ToString("F3") + " "
           + x.ToString("F3") + " "
           + y.ToString("F3") + " "
           + z.ToString("F3") + "]";
 
-    Dispatcher.Invoke(() => {
+    Dispatcher.InvokeAsync(() => {
       Timestamp.Text = timestamp;
       Orientation.Text = data;
-    });
-    _lastTime = time;
+    }, DispatcherPriority.Render);
+  }
+
+  // OpenGL
+  void OnLoaded(object sender, RoutedEventArgs e) {
+    _shader = new();
+    _axis3D = new();
+
+    GL.ClearColor(Color.FromArgb(0x3C, 0x41, 0x42));
+  }
+  void OnRender(TimeSpan obj) {
+    GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+
+    var model = Matrix4.CreateFromQuaternion(orientation);
+    var view = Matrix4.LookAt(new Vector3(2, 2, 2), Vector3.Zero, Vector3.UnitY);
+    var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90), (float)(Width / Height), 0.1f, 100f);
+    Matrix4 mvp = model * toENU * view * proj;
+
+    _shader?.Use();
+    _shader?.SetUniform("uMVP", ref mvp);
+
+    _axis3D?.Draw();
   }
 }
