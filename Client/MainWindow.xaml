@@ -2,6 +2,7 @@
   x:Class="Client.MainWindow"
   xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+  xmlns:client="clr-namespace:Client"
   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
   xmlns:gl="clr-namespace:OpenTK.Wpf;assembly=GLWpfControl"
   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -44,43 +45,29 @@
         Style="{StaticResource CloseButton}" />
     </Grid>
 
-    <Grid Grid.Row="1">
+    <Grid Grid.Row="1" Margin="10px">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="1*" />
-        <ColumnDefinition Width="5*" />
+        <ColumnDefinition Width="4*" />
       </Grid.ColumnDefinitions>
 
-      <StackPanel Grid.Column="0">
-        <StackPanel Name="Devices" Style="{StaticResource Panel}">
-          <StackPanel Orientation="Horizontal">
+      <StackPanel x:Name="Panels" Margin="0px,0px,10px,10px">
+        <Border Style="{StaticResource Panel}">
+          <StackPanel>
             <TextBlock Style="{StaticResource SubTitle}" Text="Discovered BLE Devices:" />
-            <Button
-              Name="Refresh"
-              Margin="10,0"
-              Padding="10,0"
-              Click="OnRefreshClick"
-              Content="Refresh" />
+            <ListBox
+              Name="DeviceNames"
+              Grid.Column="0"
+              Style="{StaticResource List}" />
           </StackPanel>
-          <ListBox
-            Name="DeviceNames"
-            Grid.Column="0"
-            Style="{StaticResource List}" />
-        </StackPanel>
-        <StackPanel Style="{StaticResource Panel}">
-          <TextBlock Style="{StaticResource SubTitle}" Text="Services:" />
-          <ListBox
-            x:Name="ServiceNameList"
-            Grid.Column="0"
-            Style="{StaticResource List}" />
-        </StackPanel>
-        <StackPanel Style="{StaticResource Panel}">
-          <TextBlock Style="{StaticResource SubTitle}" Text="Packet Data:" />
-          <TextBlock Name="Timestamp" Style="{StaticResource Text}" />
+        </Border>
 
-          <TextBlock Name="Orientation" Style="{StaticResource Text}" />
-        </StackPanel>
+
       </StackPanel>
-      <gl:GLWpfControl Name="Viewport" Grid.Column="1" />
+
+      <Border Grid.Column="1" Style="{StaticResource Viewport}">
+        <gl:GLWpfControl Name="Viewport" />
+      </Border>
     </Grid>
   </Grid>
 </Window>

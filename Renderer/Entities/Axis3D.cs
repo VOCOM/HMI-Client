@@ -1,30 +1,32 @@
 ﻿using System.Numerics;
 using System.Runtime.InteropServices;
 using OpenTK.Graphics.OpenGL4;
+using Renderer.Structs;
 
-namespace Client;
+namespace Renderer.Entities;
 
 public class Axis3D {
-  readonly int vbo = GL.GenBuffer();
   readonly int vao = GL.GenVertexArray();
-  readonly int stride = Marshal.SizeOf<Vertex>();
-  readonly Vertex[] vertices = [
-    new(new Vector3(0,0,0),new Vector3(1,0,0)),
-    new(new Vector3(1,0,0),new Vector3(1,0,0)),
-
-    new(new Vector3(0,0,0),new Vector3(0,1,0)),
-    new(new Vector3(0,1,0),new Vector3(0,1,0)),
-
-    new(new Vector3(0,0,0),new Vector3(0,0,1)),
-    new(new Vector3(0,0,1),new Vector3(0,0,1))
-    ];
 
   public void Draw() {
     GL.BindVertexArray(vao);
     GL.DrawArrays(PrimitiveType.Lines, 0, 6);
   }
 
-  public Axis3D() {
+  public Axis3D(float l = 1) {
+    int vbo = GL.GenBuffer();
+    int stride = Marshal.SizeOf<Vertex>();
+    Vertex[] vertices = [
+    new(new Vector3(0,0,0),new Vector3(1,0,0)),
+    new(new Vector3(l,0,0),new Vector3(1,0,0)),
+
+    new(new Vector3(0,0,0),new Vector3(0,1,0)),
+    new(new Vector3(0,l,0),new Vector3(0,1,0)),
+
+    new(new Vector3(0,0,0),new Vector3(0,0,1)),
+    new(new Vector3(0,0,l),new Vector3(0,0,1))
+    ];
+
     GL.BindVertexArray(vao);
     GL.BindBuffer(BufferTarget.ArrayBuffer, vbo);
     GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * Marshal.SizeOf<Vertex>(), vertices, BufferUsageHint.StaticDraw);

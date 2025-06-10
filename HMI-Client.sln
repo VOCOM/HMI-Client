@@ -1,9 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.36105.23 d17.13
+VisualStudioVersion = 17.13.36105.23
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client", "Client\Client.csproj", "{F309A200-9C85-472E-B358-FD3432F8E90E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Renderer", "Renderer\Renderer.csproj", "{469D4DA8-670E-4092-9C66-19546CAFC08E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BluetoothLE", "BLE\BluetoothLE.csproj", "{DAEEF091-51C2-4D18-A145-2B5B8E2BF963}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +25,22 @@ Global
 		{F309A200-9C85-472E-B358-FD3432F8E90E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F309A200-9C85-472E-B358-FD3432F8E90E}.Release|x64.ActiveCfg = Release|x64
 		{F309A200-9C85-472E-B358-FD3432F8E90E}.Release|x64.Build.0 = Release|x64
+		{469D4DA8-670E-4092-9C66-19546CAFC08E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{469D4DA8-670E-4092-9C66-19546CAFC08E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{469D4DA8-670E-4092-9C66-19546CAFC08E}.Debug|x64.ActiveCfg = Debug|x64
+		{469D4DA8-670E-4092-9C66-19546CAFC08E}.Debug|x64.Build.0 = Debug|x64
+		{469D4DA8-670E-4092-9C66-19546CAFC08E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{469D4DA8-670E-4092-9C66-19546CAFC08E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{469D4DA8-670E-4092-9C66-19546CAFC08E}.Release|x64.ActiveCfg = Release|Any CPU
+		{469D4DA8-670E-4092-9C66-19546CAFC08E}.Release|x64.Build.0 = Release|Any CPU
+		{DAEEF091-51C2-4D18-A145-2B5B8E2BF963}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DAEEF091-51C2-4D18-A145-2B5B8E2BF963}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DAEEF091-51C2-4D18-A145-2B5B8E2BF963}.Debug|x64.ActiveCfg = Debug|x64
+		{DAEEF091-51C2-4D18-A145-2B5B8E2BF963}.Debug|x64.Build.0 = Debug|x64
+		{DAEEF091-51C2-4D18-A145-2B5B8E2BF963}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DAEEF091-51C2-4D18-A145-2B5B8E2BF963}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DAEEF091-51C2-4D18-A145-2B5B8E2BF963}.Release|x64.ActiveCfg = Release|Any CPU
+		{DAEEF091-51C2-4D18-A145-2B5B8E2BF963}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

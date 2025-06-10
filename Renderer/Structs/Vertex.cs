@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace Client;
+namespace Renderer.Structs;
 
 struct Vertex(Vector3 position, Vector3 color) {
   public Vector3 Position = position;
