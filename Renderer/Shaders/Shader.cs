@@ -1,16 +1,21 @@
-﻿using System.IO;
-using OpenTK.Graphics.OpenGL4;
+﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using Renderer.Interfaces;
 
-namespace Client.Shaders;
+namespace Renderer.Shaders;
 
-public class Shader {
-  readonly int handle;
-
+public class Shader: IShader {
   public void Use() => GL.UseProgram(handle);
   public void SetUniform(string attributeName, ref Matrix4 matrix) {
     int location = GL.GetUniformLocation(handle, attributeName);
     GL.UniformMatrix4(location, false, ref matrix);
+  }
+  public void Render(List<IRenderable> models) {
+    foreach(IRenderable model in models) {
+      Matrix4 matrix = model.Matrix;
+      SetUniform("uModel", ref matrix);
+      model.Draw();
+    }
   }
 
   public Shader() {
@@ -38,4 +43,6 @@ public class Shader {
     GL.DeleteShader(vertexShader);
     GL.DeleteShader(fragmentShader);
   }
+
+  readonly int handle;
 }

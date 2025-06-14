@@ -1,8 +1,8 @@
-﻿using System.Numerics;
+﻿using OpenTK.Mathematics;
 
 namespace Renderer.Structs;
 
-struct Vertex(Vector3 position, Vector3 color) {
+struct Vertex(Vector3 position = default, Color4 color = default) {
   public Vector3 Position = position;
-  public Vector3 Color = color;
+  public Color4 Color = color;
 }

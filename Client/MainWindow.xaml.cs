@@ -6,10 +6,9 @@ using System.Windows.Input;
 using System.Windows.Threading;
 using BluetoothLE.Services;
 using BluetoothLE.Structs;
-using Client.Shaders;
 using OpenTK.Graphics.OpenGL4;
-using OpenTK.Mathematics;
 using Renderer.Entities;
+using Renderer.Interfaces;
 using Application = System.Windows.Application;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using Point = System.Drawing.Point;
@@ -135,6 +134,17 @@ public partial class MainWindow: Window {
         $"Z: {data.Orientation[i].Z:0.000}\n";
 
       Dispatcher.Invoke(() => SensorTabs[idx][i].Content = displayText);
+
+      if(rightHand is null) continue;
+      rightHand[i].Position = new(
+        data.Position[i].X,
+        data.Position[i].Y,
+        data.Position[i].Z);
+      rightHand[i].Orientation = new(
+        data.Orientation[i].X,
+        data.Orientation[i].Y,
+        data.Orientation[i].Z,
+        data.Orientation[i].W);
     }
 
     //TabItem p = SensorTabs.First(t => t.Name == data.Name.Replace(" ", null));
@@ -142,40 +152,29 @@ public partial class MainWindow: Window {
   }
 
   // OpenGL
-  Shader? _shader;
-  Axis3D? _axis3D;
+  Camera? camera;
+  RightHand? rightHand;
   readonly Pose[] poses = new Pose[6];
-  readonly Matrix4 ENU2GL = new(Vector4.UnitX, Vector4.UnitZ, Vector4.UnitY, Vector4.UnitW);
 
   void OnLoaded(object sender, RoutedEventArgs e) {
-    _shader = new();
-    _axis3D = new(0.5f);
+    float scale = (float)(Math.Max(Width, Height) / 3f);
+    camera = new() {
+      Position = new(0, 0, 1),
+      Offset = new(0f, 0.7f, 0f),
+      Width = (float)(Width / scale),
+      Height = (float)(Height / scale),
+      TogglePerspective = false
+    };
 
-    for(int i = 0; i < poses.Length; i++) poses[i].Orientation = Quaternion.Identity;
+    rightHand = new();
+    IRenderable.Spawn(rightHand);
 
-    poses[0].Position = new(0, 0, 0); // Palm
-    poses[1].Position = new(0, 0, 0); // Thumb
-    poses[2].Position = new(0, 0, 0); // Index
-    poses[3].Position = new(0, 0, 0); // Middle
-    poses[4].Position = new(0, 0, 0); // Ring
-    poses[5].Position = new(0, 0, 0); // Little
-
+    // Background [Charcoal Gray]
     GL.ClearColor(Color.FromArgb(0x3C, 0x41, 0x42));
   }
   void OnRender(TimeSpan obj) {
     GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-    Matrix4 model
-      = Matrix4.CreateFromQuaternion(poses[0].Orientation)
-      * ENU2GL
-      * Matrix4.CreateTranslation(poses[0].Position);
-    var view = Matrix4.LookAt(new Vector3(1, 1, 1), Vector3.Zero, Vector3.UnitY);
-    var proj = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90), (float)(Width / Height), 0.1f, 100f);
-    Matrix4 mvp = model * view * proj;
-
-    _shader?.Use();
-    _shader?.SetUniform("uMVP", ref mvp);
-
-    _axis3D?.Draw();
+    camera?.Render();
   }
 }

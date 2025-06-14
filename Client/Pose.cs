@@ -2,7 +2,7 @@
 
 namespace Client;
 
-struct Pose {
-  public Quaternion Orientation;
-  public Vector3 Position;
+public struct Pose() {
+  public Quaternion Orientation = Quaternion.Identity;
+  public Vector3 Position = Vector3.Zero;
 }
